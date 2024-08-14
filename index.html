@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do-App</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+    <h1>To-Do-App</h1>
+    <p>Hier können Sie Ihre To-Do Liste verwalten.</p>
+
+    <!-- Anmeldeformular -->
+    <form id="loginForm">
+        <input type="email" id="emailInput" placeholder="E-Mail" />
+        <input type="password" id="passwordInput" placeholder="Passwort" />
+        <button type="submit">Anmelden</button>
+        <button type="button" onclick="showRegistrationForm()">Zur Registrierung</button>
+        <button type="button" onclick="sendPasswordReset()">Passwort zurücksetzen</button>
+        <button type="button" onclick="loginAsGuest()">Als Gast fortfahren</button>
+    </form>
+
+    <!-- Registrierungsformular -->
+    <form id="registrationForm" style="display: none;">
+        <input type="email" id="regEmailInput" placeholder="E-Mail" />
+        <input type="password" id="regPasswordInput" placeholder="Passwort" />
+        <button type="submit">Registrieren</button>
+        <button type="button" onclick="showLoginForm()">Zum Login</button>
+    </form>
+
+    <!-- Logout-Button -->
+    <button id="logoutButton" style="display: none;">Abmelden</button>
+
+    <!-- Notiz-Formular (wird nach erfolgreicher Anmeldung oder im Gastmodus angezeigt) -->
+    <form id="noteForm" style="display: none;">
+        <input type="text" id="noteInput" placeholder="Notiz eingeben" />
+        <button type="submit">Aufgabe hinzufügen</button>
+    </form>
+
+    <!-- Anzeige der Notizen -->
+    <div id="noteList"></div>
+
+    <script>
+        // Firebase-Konfiguration
+        const firebaseConfig = {
+            apiKey: "AIzaSyArNG63PLcdG8CDXqc0xU2F2k84v31uPH0",
+            authDomain: "todo-4a2ff.firebaseapp.com",
+            databaseURL: "https://todo-4a2ff-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "todo-4a2ff",
+            storageBucket: "todo-4a2ff.appspot.com",
+            messagingSenderId: "1043080369779",
+            appId: "1:1043080369779:web:17f40d71a27d889c1a7c06"
+        };
+
+        // Firebase initialisieren
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        let isGuest = false;  // Variable um den Gastmodus zu verfolgen
+
+        // Registrierungsformular-Event-Listener
+        document.getElementById('registrationForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = document.getElementById('regEmailInput').value;
+            const password = document.getElementById('regPasswordInput').value;
+
+            auth.createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    document.getElementById('registrationForm').style.display = 'none';
+                    document.getElementById('noteForm').style.display = 'block';
+                    document.getElementById('logoutButton').style.display = 'block';
+                    isGuest = false;
+                    getAndRenderNotes(userCredential.user.uid);
+                })
+                .catch((error) => {
+                    console.error('Registrierungsfehler', error);
+                });
+        });
+
+        // Anmeldeformular-Event-Listener
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = document.getElementById('emailInput').value;
+            const password = document.getElementById('passwordInput').value;
+
+            auth.signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    document.getElementById('loginForm').style.display = 'none';
+                    document.getElementById('registrationForm').style.display = 'none';
+                    document.getElementById('noteForm').style.display = 'block';
+                    document.getElementById('logoutButton').style.display = 'block';
+                    isGuest = false;
+                    getAndRenderNotes(userCredential.user.uid);
+                })
+                .catch((error) => {
+                    console.error('Anmeldefehler', error);
+                });
+        });
+
+        // Gastmodus Funktion
+        function loginAsGuest() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('registrationForm').style.display = 'none';
+            document.getElementById('noteForm').style.display = 'block';
+            document.getElementById('logoutButton').style.display = 'block';
+            isGuest = true;
+            getAndRenderGuestNotes();
+        }
+
+        // Logout-Button-Event-Listener
+        document.getElementById('logoutButton').addEventListener('click', function() {
+            if (!isGuest) {
+                auth.signOut().then(() => {
+                    resetUI();
+                });
+            } else {
+                resetUI();
+            }
+        });
+
+        // Notiz hinzufügen Funktion für Gast und registrierte Benutzer
+        document.getElementById('noteForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const noteInput = document.getElementById('noteInput').value;
+            if (isGuest) {
+                addGuestNote(noteInput);
+            } else if (auth.currentUser) {
+                addNote(auth.currentUser.uid, noteInput);
+            }
+            document.getElementById('noteInput').value = '';
+        });
+
+        // Notiz hinzufügen in Firestore
+        function addNote(userId, noteText) {
+            db.collection('notes').doc(userId).collection('userNotes').add({
+                text: noteText,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }
+
+        // Notiz löschen in Firestore
+        function deleteNote(userId, noteId) {
+            db.collection('notes').doc(userId).collection('userNotes').doc(noteId).delete();
+        }
+
+        // Notizen anzeigen für registrierte Benutzer
+        function getAndRenderNotes(userId) {
+            db.collection('notes').doc(userId).collection('userNotes').orderBy('createdAt')
+                .onSnapshot((snapshot) => {
+                    const noteList = document.getElementById('noteList');
+                    noteList.innerHTML = '';
+                    snapshot.forEach((doc) => {
+                        const note = doc.data();
+                        const noteElement = document.createElement('div');
+                        noteElement.innerText = note.text;
+
+                        // Lösch-Button hinzufügen
+                        const deleteButton = document.createElement('button');
+                        deleteButton.innerText = 'Löschen';
+                        deleteButton.onclick = () => deleteNote(userId, doc.id);
+
+                        noteElement.appendChild(deleteButton);
+                        noteList.appendChild(noteElement);
+                    });
+                });
+        }
+
+        // Notizen lokal speichern und anzeigen für Gastmodus
+        function addGuestNote(noteText) {
+            let guestNotes = JSON.parse(localStorage.getItem('guestNotes')) || [];
+            guestNotes.push(noteText);
+            localStorage.setItem('guestNotes', JSON.stringify(guestNotes));
+            getAndRenderGuestNotes();
+        }
+
+        function getAndRenderGuestNotes() {
+            const guestNotes = JSON.parse(localStorage.getItem('guestNotes')) || [];
+            const noteList = document.getElementById('noteList');
+            noteList.innerHTML = '';
+            guestNotes.forEach((noteText, index) => {
+                const noteElement = document.createElement('div');
+                noteElement.innerText = noteText;
+
+                // Lösch-Button hinzufügen
+                const deleteButton = document.createElement('button');
+                deleteButton.innerText = 'Löschen';
+                deleteButton.onclick = () => deleteGuestNote(index);
+
+                noteElement.appendChild(deleteButton);
+                noteList.appendChild(noteElement);
+            });
+        }
+
+        function deleteGuestNote(index) {
+            let guestNotes = JSON.parse(localStorage.getItem('guestNotes')) || [];
+            guestNotes.splice(index, 1);
+            localStorage.setItem('guestNotes', JSON.stringify(guestNotes));
+            getAndRenderGuestNotes();
+        }
+
+        // UI zurücksetzen
+        function resetUI() {
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('registrationForm').style.display = 'block';
+            document.getElementById('noteForm').style.display = 'none';
+            document.getElementById('logoutButton').style.display = 'none';
+            document.getElementById('noteList').innerHTML = '';
+            localStorage.removeItem('guestNotes');  // Optional: Gastnotizen löschen nach dem Logout
+            isGuest = false;
+        }
+
+        // Passwort-Zurücksetzen-Funktion
+        function sendPasswordReset() {
+            const email = document.getElementById('emailInput').value;
+            if (email) {
+                auth.sendPasswordResetEmail(email)
+                    .then(() => {
+                        alert('Passwort-Zurücksetzen-E-Mail gesendet!');
+                    })
+                    .catch((error) => {
+                        console.error('Fehler beim Zurücksetzen des Passworts', error);
+                    });
+            } else {
+                alert('Bitte geben Sie Ihre E-Mail-Adresse ein.');
+            }
+        }
+
+        function showLoginForm() {
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('registrationForm').style.display = 'none';
+        }
+
+        function showRegistrationForm() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('registrationForm').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
