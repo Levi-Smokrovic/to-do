@@ -204,8 +204,8 @@
 
         // UI zurücksetzen
         function resetUI() {
-            document.getElementById('loginForm').style.display = 'block';
-            document.getElementById('registrationForm').style.display = 'block';
+            document.getElementById('loginForm').style.display = 'block'; // Nur das Anmeldeformular anzeigen
+            document.getElementById('registrationForm').style.display = 'none'; // Registrierungsformular verbergen
             document.getElementById('noteForm').style.display = 'none';
             document.getElementById('logoutButton').style.display = 'none';
             document.getElementById('noteList').innerHTML = '';
