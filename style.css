@@ -1,0 +1,71 @@
+/* CSS für die Anpassungen */
+label {
+    font-size: 16px;
+    margin-bottom: 8px;
+    display: block;
+}
+input[type="text"] {
+    font-size: 16px;
+    margin-bottom: 16px;
+}
+
+/* Ausblenden des "Notiz hinzufügen"-Formulars */
+#noteForm {
+    display: none;
+}
+
+/* Stil für den Hauptcontainer */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background-color: #f5f5f5;
+}
+
+#container {
+    width: 80%;
+    max-width: 500px;
+    margin: auto;
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+input,
+button {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+#allNotes {
+    margin-top: 20px;
+}
+
+.note {
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 4px;
+}
