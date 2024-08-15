@@ -43,6 +43,7 @@ body {
     top: 10px;
     right: 10px;
 }
+
 /* Stil für den Logout-Button */
 #logoutButton {
     font-size: 12px;
@@ -52,6 +53,7 @@ body {
     border: none;
     cursor: pointer;
 }
+
 #logoutButton:hover {
     text-decoration: underline;
     background-color: transparent;
@@ -88,3 +90,5 @@ button:hover {
     margin-top: 10px;
     border-radius: 4px;
 }
+
+
