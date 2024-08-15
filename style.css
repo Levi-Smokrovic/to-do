@@ -14,6 +14,7 @@ input[type="text"] {
     display: none;
 }
 
+
 /* Stil für den Hauptcontainer */
 body {
     font-family: Arial, sans-serif;
@@ -36,7 +37,25 @@ body {
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
-
+/* Container für Logout-Button */
+#logoutContainer {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+/* Stil für den Logout-Button */
+#logoutButton {
+    font-size: 12px;
+    padding: 5px 10px;
+    background-color: transparent;
+    color: #007bff;
+    border: none;
+    cursor: pointer;
+}
+#logoutButton:hover {
+    text-decoration: underline;
+    background-color: transparent;
+}
 input,
 button {
     width: 100%;
