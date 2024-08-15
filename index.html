@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,11 +8,24 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <link rel="stylesheet" type="text/css" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+
+
+
 </head>
 <body>
+    <div id="infoIconContainer">
+        <img src="information.png" alt="Info Icon" id="infoIcon" onclick="toggleInfo()">
+        <div id="infoText" style="display:none;">
+            <ul>
+                <li>Hier können Sie sich anmelden oder registrieren, um Ihre To-Do-Liste zu verwalten.</li>
+                <li>Nutzen Sie den Gastmodus, um ohne Registrierung Notizen zu schreiben diese werden dannach nicht gespeichert.</li>
+                <li>Verwalten Sie Ihre Aufgaben effizient mit unserer einfachen To-Do-Liste.</li>
+            </ul>
+        </div>
+    </div>
     <h1>To-Do-App</h1>
     <p>Hier können Sie Ihre To-Do Liste verwalten.</p>
-
     <!-- Anmeldeformular -->
     <form id="loginForm">
         <input type="email" id="emailInput" placeholder="E-Mail" />
@@ -30,7 +43,13 @@
         <button type="submit">Registrieren</button>
         <button type="button" onclick="showLoginForm()">Zum Login</button>
     </form>
+<!-- Kleines Begrüßungsfenster -->
+<div id="welcomeMessage" style="display: none;">
+    ❤️ Willkommen! <br> Danke, dass du meine Webseite benutzt.
+</div>
 
+
+    
     <!-- Logout-Button -->
     <div id="logoutContainer">
         <button id="logoutButton" style="display: none;">Abmelden</button>
@@ -82,6 +101,65 @@
                     console.error('Registrierungsfehler', error);
                 });
         });
+
+    function toggleInfo() {
+        const infoText = document.getElementById('infoText');
+        if (infoText.style.display === 'none' || infoText.style.display === '') {
+        infoText.style.display = 'block';
+        } else {
+        infoText.style.display = 'none';
+    }
+}
+document.getElementById('registrationForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const email = document.getElementById('regEmailInput').value;
+    const password = document.getElementById('regPasswordInput').value;
+
+    auth.createUserWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+            document.getElementById('registrationForm').style.display = 'none';
+            document.getElementById('noteForm').style.display = 'block';
+            document.getElementById('logoutButton').style.display = 'block';
+            isGuest = false;
+            getAndRenderNotes(userCredential.user.uid);
+            
+
+        })
+        .catch((error) => {
+            console.error('Registrierungsfehler', error);
+        });
+});
+
+document.getElementById('registrationForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const email = document.getElementById('regEmailInput').value;
+    const password = document.getElementById('regPasswordInput').value;
+
+    auth.createUserWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+            document.getElementById('registrationForm').style.display = 'none';
+            document.getElementById('noteForm').style.display = 'block';
+            document.getElementById('logoutButton').style.display = 'block';
+            isGuest = false;
+            getAndRenderNotes(userCredential.user.uid);
+
+            // Begrüßungsfenster anzeigen
+            showWelcomeMessage();
+        })
+        .catch((error) => {
+            console.error('Registrierungsfehler', error);
+        });
+});
+
+function showWelcomeMessage() {
+    const welcomeMessage = document.getElementById('welcomeMessage');
+    welcomeMessage.classList.add('show');
+
+    // Nach 5 Sekunden das Fenster ausblenden
+    setTimeout(() => {
+        welcomeMessage.classList.remove('show');
+    }, 5000);
+}
 
         // Anmeldeformular-Event-Listener
         document.getElementById('loginForm').addEventListener('submit', function(e) {
